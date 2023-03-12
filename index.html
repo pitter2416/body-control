@@ -35,6 +35,15 @@
         import { GUI } from 'three/addons/libs/lil-gui.module.min.js';
 
         let camera, scene, renderer, controls;
+        const decals = [];
+        const params = {
+            minScale: 10,
+            maxScale: 20,
+            rotate: true,
+            clear: function () {
+                removeDecals();
+            }
+        };
 
         init();
         animate();
@@ -53,16 +62,27 @@
 
             new GLTFLoader()
                 .setPath('models/')
-                .load('body.glb', function (gltf) {
-
+                .load('LightsPunctualLamp.glb', function (gltf) {
                     scene.add(gltf.scene);
+                    const gui = new GUI();
+                    gui.add(params, 'minScale', 1, 30);
+                    gui.add(params, 'maxScale', 1, 30);
+                    gui.add(params, 'rotate');
+                    gui.add(params, 'clear');
+                    gui.open();
 
-                    // const object = gltf.scene.getObjectByName('SheenChair_fabric');
+                    const geometry = new THREE.BufferGeometry();
+                    geometry.setFromPoints([new THREE.Vector3(), new THREE.Vector3()]);
+                    let line = new THREE.Line(geometry, new THREE.LineBasicMaterial())
+                    line.material.color = new THREE.Color(0xff00ff);
+                    line.material.needsUpdate = true;
 
-                    // const gui = new GUI();
+                    const positions = line.geometry.attributes.position;
+                    positions.setXYZ(0, 1.0, 1.2, 0);
+                    positions.setXYZ(0, 1.2, 1.2, 0);
+                    positions.needsUpdate = true;
 
-                    // gui.add(object.material, 'sheen', 0, 1);
-                    // gui.open();
+                    scene.add(line);
 
                 });
 
@@ -117,6 +137,14 @@
             renderer.render(scene, camera);
 
         }
+
+        function removeDecals() {
+            decals.forEach(function (d) {
+                scene.remove(d);
+            });
+            decals.length = 0;
+        }
+
     </script>
 
 </body>
