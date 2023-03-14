@@ -9,32 +9,35 @@
 </head>
 
 <body>
-    <div id="container"></div>
+    <div class="content">
+        <div class="body-container">
+            <canvas id="render-box"></canvas>
+        </div>
+        <div class="body-control">
+
+        </div>
+    </div>
     <!-- Import maps polyfill -->
     <!-- Remove this when import maps will be widely supported -->
     <script async src="https://unpkg.com/es-module-shims@1.6.3/dist/es-module-shims.js"></script>
 
     <script type="importmap">
-			{
-				"imports": {
-					"three": "./js/three.module.js",
-					"three/addons/": "./js/jsm/"
-				}
-			}
-		</script>
+        {
+            "imports": {
+                "three": "./js/three.module.js",
+                "three/addons/": "./js/jsm/"
+            }
+        }
+    </script>
 
     <script type="module">
-        // ./models/男性基础人体人物.glb
-
         import * as THREE from 'three';
-
         import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
         import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
         import { RoomEnvironment } from 'three/addons/environments/RoomEnvironment.js';
-        import { OBJLoader } from 'three/addons/loaders/OBJLoader.js';
         import { GUI } from 'three/addons/libs/lil-gui.module.min.js';
 
-        let camera, scene, renderer, controls;
+        let camera, scene, renderer, controls,geometry;
         const decals = [];
         const params = {
             minScale: 10,
@@ -50,59 +53,55 @@
 
 
         function init() {
-
-            const container = document.createElement('div');
-            document.body.appendChild(container);
-
+            const renderBox = document.querySelector('#render-box');
             camera = new THREE.PerspectiveCamera(45, window.innerWidth / window.innerHeight, 0.1, 20);
             camera.position.set(- 0.75, 0.7, 1.25);
-
             scene = new THREE.Scene();
-
             // model
+
+            var pointLight = new THREE.PointLight( 0xcccccc); 
+            camera.add( pointLight );
+            scene.add( camera );
+
 
             new GLTFLoader()
                 .setPath('models/')
-                .load('LightsPunctualLamp.glb', function (gltf) {
-                    scene.add(gltf.scene);
-                    const gui = new GUI();
-                    gui.add(params, 'minScale', 1, 30);
-                    gui.add(params, 'maxScale', 1, 30);
-                    gui.add(params, 'rotate');
-                    gui.add(params, 'clear');
-                    gui.open();
+                .load('body.glb', function (gltf) {
+                const model = gltf.scene;
+                console.log(model);
+                console.log(model.getObjectByName('mesh_1'))
+                scene.add(model);
+                // model.getObjectByName('mesh_0').material.color.setHex(0xff00ff);
 
-                    const geometry = new THREE.BufferGeometry();
-                    geometry.setFromPoints([new THREE.Vector3(), new THREE.Vector3()]);
-                    let line = new THREE.Line(geometry, new THREE.LineBasicMaterial())
-                    line.material.color = new THREE.Color(0xff00ff);
-                    line.material.needsUpdate = true;
+                const gui = new GUI();
+                gui.add(params, 'minScale', 1, 30);
+                gui.add(params, 'maxScale', 1, 30);
+                gui.add(params, 'rotate');
+                gui.add(params, 'clear');
+                gui.open();
+                // geometry = new THREE.BufferGeometry();
+                // geometry.setFromPoints([new THREE.Vector3(), new THREE.Vector3()]);
+                // let line = new THREE.Line(geometry, new THREE.LineBasicMaterial())
+                // line.material.color = new THREE.Color(0xff00ff);
+                // line.material.needsUpdate = true;
+                // const positions = line.geometry.attributes.position;
+                // positions.setXYZ(0, 1.0, 1.2, 0);
+                // positions.setXYZ(0, 1.2, 1.2, 0);
+                // positions.needsUpdate = true;
+                // scene.add(line);
+            });
 
-                    const positions = line.geometry.attributes.position;
-                    positions.setXYZ(0, 1.0, 1.2, 0);
-                    positions.setXYZ(0, 1.2, 1.2, 0);
-                    positions.needsUpdate = true;
-                    scene.add(line);
-                });
-
-            // new OBJLoader().load('models/stickman.OBJ', function (object) {
-            //     object.scale.setScalar(0.02);
-            //     scene.add(object)
-            // });
-
-            renderer = new THREE.WebGLRenderer({ antialias: true });
-            renderer.setPixelRatio(window.devicePixelRatio);
-            renderer.setSize(window.innerWidth, window.innerHeight);
+            renderer = new THREE.WebGLRenderer({canvas: renderBox});
+            renderer.setPixelRatio( window.devicePixelRatio );
+            renderer.setSize(renderBox.clientWidth, renderBox.clientHeight );
             renderer.toneMapping = THREE.ACESFilmicToneMapping;
-            renderer.toneMappingExposure = 1;
+            renderer.toneMappingExposure = 1.5;
             renderer.outputEncoding = THREE.sRGBEncoding;
-            container.appendChild(renderer.domElement);
-
             const environment = new RoomEnvironment();
             const pmremGenerator = new THREE.PMREMGenerator(renderer);
-
-            scene.background = new THREE.Color(0xbbbbbb);
+            scene.background = new THREE.Color(0xffffff);
             scene.environment = pmremGenerator.fromScene(environment).texture;
+            camera.aspect = 1.2;
 
             controls = new OrbitControls(camera, renderer.domElement);
             controls.enableDamping = true;
@@ -110,36 +109,23 @@
             controls.maxDistance = 10;
             controls.target.set(0, 1, 0);
             controls.update();
-
             window.addEventListener('resize', onWindowResize);
-
         }
 
         function onWindowResize() {
-
-            camera.aspect = window.innerWidth / window.innerHeight;
+            camera.aspect = renderBox.clientWidth / renderBox.clientHeight;
             camera.updateProjectionMatrix();
-
-            renderer.setSize(window.innerWidth, window.innerHeight);
-
+            renderer.setSize(renderBox.clientWidth, renderBox.clientHeight );
         }
 
-        //
-
         function animate() {
-
             requestAnimationFrame(animate);
-
             controls.update(); // required if damping enabled
-
             render();
-
         }
 
         function render() {
-
             renderer.render(scene, camera);
-
         }
 
         function removeDecals() {
@@ -148,9 +134,7 @@
             });
             decals.length = 0;
         }
-
     </script>
-
 </body>
 
 </html>
