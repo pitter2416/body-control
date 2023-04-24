@@ -36,8 +36,10 @@
         import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
         import { RoomEnvironment } from 'three/addons/environments/RoomEnvironment.js';
         import { GUI } from 'three/addons/libs/lil-gui.module.min.js';
-
-        let camera, scene, renderer, controls,geometry;
+        import { FBXLoader } from 'three/addons/loaders/FBXLoader.js';
+        import { OBJLoader } from 'three/addons/loaders/OBJLoader.js';
+        import { MTLLoader } from 'three/addons/loaders/MTLLoader.js';
+        let camera, scene, renderer, controls, geometry;
         const decals = [];
         const params = {
             minScale: 10,
@@ -54,46 +56,38 @@
 
         function init() {
             const renderBox = document.querySelector('#render-box');
-            camera = new THREE.PerspectiveCamera(45, window.innerWidth / window.innerHeight, 0.1, 20);
-            camera.position.set(- 0.75, 0.7, 1.25);
+            camera = new THREE.PerspectiveCamera(15, renderBox.clientWidth / renderBox.clientHeight, 1.5, 23000);
+            camera.position.set(-180, -10, 520);
+
             scene = new THREE.Scene();
-            // model
+            scene.background = new THREE.Color(0xa0a0a0);
+            scene.fog = new THREE.Fog(0xa0a0a0, 200, 1000);
 
-            var pointLight = new THREE.PointLight( 0xcccccc); 
-            camera.add( pointLight );
-            scene.add( camera );
+            const hemiLight = new THREE.HemisphereLight(0xffffff, 0x444444, 1.5);
+            hemiLight.position.set(0, 100, 0);
+            scene.add(hemiLight);
+
+            new MTLLoader()
+                .load("models/1.mtl", function (materials) {
+                    materials.preload();
+                    new OBJLoader()
+                        .setMaterials(materials)
+                        .load("models/1.obj", function (object) {
+                            object.scale.set(0.028, 0.028, 0.028);
+                            var texture = new THREE.TextureLoader().load("models/ren_maps/RenTi_MediumColor.jpg");
+                            object.traverse(function (child) {
+                                if (child instanceof THREE.Mesh) {
+                                    child.material.map = texture;
+                                }
+                            });
+                            scene.add(object);
+                        });
+                });
 
 
-            new GLTFLoader()
-                .setPath('models/')
-                .load('body.glb', function (gltf) {
-                const model = gltf.scene;
-                console.log(model);
-                console.log(model.getObjectByName('mesh_1'))
-                scene.add(model);
-                // model.getObjectByName('mesh_0').material.color.setHex(0xff00ff);
-
-                const gui = new GUI();
-                gui.add(params, 'minScale', 1, 30);
-                gui.add(params, 'maxScale', 1, 30);
-                gui.add(params, 'rotate');
-                gui.add(params, 'clear');
-                gui.open();
-                // geometry = new THREE.BufferGeometry();
-                // geometry.setFromPoints([new THREE.Vector3(), new THREE.Vector3()]);
-                // let line = new THREE.Line(geometry, new THREE.LineBasicMaterial())
-                // line.material.color = new THREE.Color(0xff00ff);
-                // line.material.needsUpdate = true;
-                // const positions = line.geometry.attributes.position;
-                // positions.setXYZ(0, 1.0, 1.2, 0);
-                // positions.setXYZ(0, 1.2, 1.2, 0);
-                // positions.needsUpdate = true;
-                // scene.add(line);
-            });
-
-            renderer = new THREE.WebGLRenderer({canvas: renderBox});
-            renderer.setPixelRatio( window.devicePixelRatio );
-            renderer.setSize(renderBox.clientWidth, renderBox.clientHeight );
+            renderer = new THREE.WebGLRenderer({ canvas: renderBox });
+            renderer.setPixelRatio(window.devicePixelRatio);
+            renderer.setSize(renderBox.clientWidth, renderBox.clientHeight);
             renderer.toneMapping = THREE.ACESFilmicToneMapping;
             renderer.toneMappingExposure = 1.5;
             renderer.outputEncoding = THREE.sRGBEncoding;
@@ -113,9 +107,9 @@
         }
 
         function onWindowResize() {
-            camera.aspect = renderBox.clientWidth / renderBox.clientHeight;
-            camera.updateProjectionMatrix();
-            renderer.setSize(renderBox.clientWidth, renderBox.clientHeight );
+            // camera.aspect = renderBox.clientWidth / renderBox.clientHeight;
+            // camera.updateProjectionMatrix();
+            // renderer.setSize(renderBox.clientWidth, renderBox.clientHeight);
         }
 
         function animate() {
