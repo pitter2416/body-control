@@ -39,7 +39,7 @@
         import { FBXLoader } from 'three/addons/loaders/FBXLoader.js';
         import { OBJLoader } from 'three/addons/loaders/OBJLoader.js';
         import { MTLLoader } from 'three/addons/loaders/MTLLoader.js';
-        let camera, scene, renderer, controls, geometry;
+        let camera, scene, renderer, controls, geometry, object;
         const decals = [];
         const params = {
             minScale: 10,
@@ -52,6 +52,7 @@
         init();
         animate();
 
+        document.addEventListener( 'mousedown', onDocumentMouseDown, false );
 
 
         function init() {
@@ -67,24 +68,22 @@
             hemiLight.position.set(0, 100, 0);
             scene.add(hemiLight);
 
-            new MTLLoader()
-                .load("models/1.mtl", function (materials) {
-                    materials.preload();
-                    new OBJLoader()
-                        .setMaterials(materials)
-                        .load("models/1.obj", function (object) {
-                            object.scale.set(0.028, 0.028, 0.028);
-                            var texture = new THREE.TextureLoader().load("models/ren_maps/RenTi_MediumColor.jpg");
-                            object.traverse(function (child) {
-                                if (child instanceof THREE.Mesh) {
-                                    child.material.map = texture;
-                                }
-                            });
-                            scene.add(object);
-                        });
+            new MTLLoader().load("models/1.mtl", function (materials) {
+                materials.preload();
+                new OBJLoader().setMaterials(materials)
+                .load("models/1.obj", function (obj) {
+                    object = obj;
+                    object.scale.set(0.01, 0.01, 0.01);
+                    var texture = new THREE.TextureLoader().load("models/ren_maps/RenTi_MediumColor.jpg");
+                    console.dir(texture);
+                    object.traverse(function (child) {
+                        if (child instanceof THREE.Mesh) {
+                            child.material.map = texture;
+                        }
+                    });
+                    scene.add(object);
                 });
-
-
+            });
             renderer = new THREE.WebGLRenderer({ canvas: renderBox });
             renderer.setPixelRatio(window.devicePixelRatio);
             renderer.setSize(renderBox.clientWidth, renderBox.clientHeight);
@@ -127,6 +126,27 @@
                 scene.remove(d);
             });
             decals.length = 0;
+        }
+
+        function onDocumentMouseDown( e ) {
+            e.preventDefault();
+            var vectorMouse = new THREE.Vector3( //vector from camera to mouse
+                -(window.innerWidth/2-e.clientX)*2/window.innerWidth,
+                (window.innerHeight/2-e.clientY)*2/window.innerHeight,
+                -1/Math.tan(22.5*Math.PI/180)); //22.5 is half of camera frustum angle 45 degree
+            vectorMouse.applyQuaternion(camera.quaternion);
+            vectorMouse.normalize();        
+
+            var vectorObject = new THREE.Vector3(); //vector from camera to object
+            vectorObject.set(object.x - camera.position.x,
+                            object.y - camera.position.y,
+                            object.z - camera.position.z);
+            vectorObject.normalize();
+            if (vectorMouse.angleTo(vectorObject)*180/Math.PI < 1) {
+                //mouse's position is near object's position
+                console.dir(vectorMouse);
+
+            }
         }
     </script>
 </body>
