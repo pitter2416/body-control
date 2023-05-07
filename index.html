@@ -7,6 +7,8 @@
     <meta name="viewport" content="width=device-width, user-scalable=no, minimum-scale=1.0, maximum-scale=1.0">
     <style>
         * {
+            padding: 0px;
+            margin: 0px;
             cursor: crosshair;
         }
     </style>
@@ -35,9 +37,8 @@
         import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
         import { FontLoader } from 'three/addons/loaders/FontLoader.js';
         import { TextGeometry } from 'three/addons/geometries/TextGeometry.js';
-
         import { DecalGeometry } from 'three/addons/geometries/DecalGeometry.js';
-
+        // import { ShapeBufferGeometry } from 'three/addons/geometries/ShapeBufferGeometry.js';
         
         const MyUtils = {
             textureToCanvas: function(texture) {
@@ -53,11 +54,131 @@
         var index = 0;
         var list = [];
         var idList = [1,2,3,4,5,6,7,8,9,10,11]
-
-        var preLoadMeshList = [];
+        var preLoadMeshList = [
+            {
+                "id": 0,
+                "position": {
+                    "x": 4.906766251323462,
+                    "y": 23.82699745489056,
+                    "z": 1.0713253961579916
+                },
+                "x": 12.347583444114209,
+                "y": 130.13389654393782,
+                "z": 4.683201024249577
+            },
+            {
+                "id": 1,
+                "position": {
+                    "x": 4.774796034613796,
+                    "y": 25.622232700251473,
+                    "z": 0.16728420672617972
+                },
+                "x": 12.083643010694876,
+                "y": 133.72436703465965,
+                "z": 2.875118645385953
+            },
+            {
+                "id": 2,
+                "position": {
+                    "x": 9.862518602554157,
+                    "y": 18.860997990163938,
+                    "z": -0.4195490790328442
+                },
+                "x": 22.2590881465756,
+                "y": 120.20189761448458,
+                "z": 1.7014520738679053
+            },
+            {
+                "id": 3,
+                "position": {
+                    "x": 9.992638818317557,
+                    "y": 17.965059617852305,
+                    "z": -0.3541840638044569
+                },
+                "x": 22.5193285781024,
+                "y": 118.41002086986131,
+                "z": 1.83218210432468
+            },
+            {
+                "id": 4,
+                "position": {
+                    "x": 10.624135270592912,
+                    "y": 13.361209640192214,
+                    "z": -0.9294802310187649
+                },
+                "x": 23.78232148265311,
+                "y": 109.20232091454113,
+                "z": 0.681589769896064
+            },
+            {
+                "id": 5,
+                "position": {
+                    "x": 11.479110748385772,
+                    "y": 8.543902957135593,
+                    "z": -0.5635039392878092
+                },
+                "x": 25.492272438238828,
+                "y": 99.56770754842789,
+                "z": 1.4135423533579754
+            },
+            {
+                "id": 6,
+                "position": {
+                    "x": 12.751319660305526,
+                    "y": 4.210386181667367,
+                    "z": -1.4291736569933473
+                },
+                "x": 28.036690262078338,
+                "y": 90.90067399749144,
+                "z": -0.31779708205310087
+            },
+            {
+                "id": 7,
+                "position": {
+                    "x": 12.236167815898288,
+                    "y": 3.0808688430612534,
+                    "z": -0.6779794604660623
+                },
+                "x": 27.00638657326386,
+                "y": 88.64163932027921,
+                "z": 1.1845913110014692
+            },
+            {
+                "id": 8,
+                "position": {
+                    "x": 12.498825575048572,
+                    "y": 2.0584492716912024,
+                    "z": -0.49423328605227823
+                },
+                "x": 27.53170209156443,
+                "y": 86.59680017753911,
+                "z": 1.5520836598290373
+            },
+            {
+                "id": 9,
+                "position": {
+                    "x": 13.263159737854108,
+                    "y": 0.3275736217627596,
+                    "z": 0.20235921271433455
+                },
+                "x": 29.060370417175502,
+                "y": 83.13504887768222,
+                "z": 2.945268657362263
+            },
+            {
+                "id": 10,
+                "position": {
+                    "x": 14.840785470154472,
+                    "y": -2.38797134572156,
+                    "z": 0.8126709165086439
+                },
+                "x": 32.21562188177623,
+                "y": 77.70395894271358,
+                "z": 4.1658920649508815
+            }
+        ];
 
         const container = document.getElementById( 'container' );
-
         let renderer, scene, camera, stats, canvas, texture, targetObject;
         let mesh;
         let raycaster;
@@ -87,16 +208,12 @@
         init();
         animate();
 
-        function loadMeshDatas() {
-            preLoadMeshList = JSON.parse(`[]`);
-        }
-
         function init() {
-            loadMeshDatas();
             renderer = new THREE.WebGLRenderer( { antialias: true });
             renderer.setPixelRatio( window.devicePixelRatio );
             renderer.setSize( window.innerWidth, window.innerHeight );
             container.appendChild( renderer.domElement );
+            renderer.setClearColor(0xcccccc); 
 
             stats = new Stats();
             container.appendChild( stats.dom );
@@ -172,7 +289,7 @@
                 raycaster.intersectObject( mesh, false, intersects );
                 if ( intersects.length > 0 ) {
                     if(flag) {
-                        console.dir(intersects[0]);
+                        // console.dir(intersects[0]);
                     }
                     const p = intersects[ 0 ].point;
                     mouseHelper.position.copy( p );
@@ -256,33 +373,37 @@
             // 将圆球添加到场景中
             decals.push( sphere );
             mesh.attach(sphere)
-            sphere.name = `${index++}`
-            list.push(JSON.stringify(sphere))
+            list.push({id: index++, position: {x: position.x, y: position.y, z: position.z},  x: sphere.matrix.elements[12], y: sphere.matrix.elements[13], z: sphere.matrix.elements[14]})
             if(list.length == idList.length) {
+                console.log(list)
             }
+            var matrix = new THREE.Matrix4();
         }
 
-        function addFont(m, position) {
+        function addFont(m, model) {
             const fontLoader = new FontLoader();
             // Load a font
             fontLoader.load('fonts/helvetiker_regular.typeface.json', function(font) {
-                const textGeometry = new TextGeometry('Hello, World!', {
+                const textGeometry = new TextGeometry('Your Text Here', {
                     font: font,
                     size: 1,
-                    height: 0.5
+                    height: 0.5,
+                    curveSegments: 1,
+                    bevelEnabled: false,
+                    bevelThickness: 0.5,
+                    bevelSize: 0.2,
+                    bevelOffset: 1,
+                    bevelSegments: 0.1
                 });
-                // Compute the bounding box of the text geometry
-                const textBoundingBox = new THREE.Box3().setFromObject(new THREE.Mesh(textGeometry));
-                // Compute the size of the box
-                const boxSize = textBoundingBox.getSize(new THREE.Vector3()).length();
-                // Set the scale factor to fit the text inside the box
-                // const scaleFactor = 50 / boxSize;
-                // Create the mesh
-                const textMesh = new THREE.Mesh(textGeometry, new THREE.MeshBasicMaterial({ color: 0xffffff }));
-                // Set the scale of the mesh to fit the text inside the box
-                // textMesh.scale.set(scaleFactor, scaleFactor, scaleFactor);
-                textMesh.position.set(position.x, position.y, position.z);
-                scene.add(textMesh)
+
+                // Convert the geometry to a shape
+                var txt_mat = new THREE.MeshPhongMaterial({color:0xffffff});
+
+                // Create a mesh from the shape
+                const textMesh = new THREE.Mesh(textGeometry, txt_mat);
+                textMesh.position.set(model.position.x, model.position.y, model.position.z)
+                textMesh.name = `${model.id}`;
+                mesh.attach(textMesh);
             })
         }
 
@@ -317,17 +438,18 @@
                 const heightSegments = 12; // 球体高度上的分段数
                 const geometry = new THREE.SphereGeometry(radius, widthSegments, heightSegments);
                 // 创建一个材质
-                const material1 = new THREE.MeshBasicMaterial({ color: 0xff0000 });
+                const material = new THREE.MeshBasicMaterial({ color: 0xff0000 });
                 // 创建一个圆球的网格模型
-                var mesh1 = new THREE.Mesh(geometry, material1);
+                var mesh1 = new THREE.Mesh(geometry, material);
                 // Set the transformation matrix
                 var matrix = new THREE.Matrix4();
-                matrix.makeTranslation(model.object.matrix[12], model.object.matrix[13], model.object.matrix[14]);
+                matrix.makeTranslation(model.x, model.y, model.z);
                 mesh1.matrix = matrix;
                 mesh1.position.setFromMatrixPosition(matrix);
                 mesh1.rotation.setFromRotationMatrix(matrix);
-                mesh1.name = model.object.name;
-                mesh.attach(mesh1)
+                mesh1.name = `${model.id}`;
+                mesh.attach(mesh1);
+                addFont(mesh1, model)
             }
         }
     </script>
