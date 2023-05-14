@@ -147,6 +147,7 @@
         import { FontLoader } from 'three/addons/loaders/FontLoader.js';
         import { TextGeometry } from 'three/addons/geometries/TextGeometry.js';
         import { DecalGeometry } from 'three/addons/geometries/DecalGeometry.js';
+
         import {
             CSS2DRenderer,
             CSS2DObject,
@@ -396,27 +397,8 @@
                 });
                 var mesh1 = new THREE.Mesh(geometry, mat);
                 mesh1.needsUpdate = true;
-                var z = angle;
-                var x = 0
-                var y = 0
-                if (angle < -2.5) {
-                    z = -1 * angle;
-                    x = angle / 3;
-                    mesh1.rotation.y = - angle / 3;
-                } else if (angle < -1.5) {
-                    z = -angle - 1;
-                    x = -angle / 2;
-                    mesh1.rotation.y = angle / 2;
-                } else if (angle <= 0) {
-                    z = angle;
-                    x = -angle / 3;
-                    mesh1.rotation.y = - angle;
-                } else {
-                    z = -1 * angle / 2;
-                    x = -1 * angle / 2;
-                    mesh1.rotation.y = angle / 2;
-                }
-                mesh1.position.set(model.position.x - 1, model.position.y + y, model.position.z + z);
+                mesh1.rotation.y = ((model.y * angle) / 2 - (-angle - 1) / 2) / 2;
+                mesh1.position.set(model.position.x + model.x / 4, model.position.y, model.position.z - (1 - model.z));
                 mesh.attach(mesh1);
                 decals.push(mesh1);
             });
@@ -440,6 +422,8 @@
             renderer.render(scene, camera);
         }
 
+
+        // 把所有穴位点全部添加到人体上，并设置成不透明
         function preRender() {
             for (var i = 0; i < preLoadMeshList.length; i++) {
                 var model = preLoadMeshList[i];
@@ -545,26 +529,30 @@
         document.querySelector('#input-acupoints').addEventListener('change', onAcupointsValueChanged);
 
         function onAcupointsClick(obj) {
-            mesh.children.forEach(e => e.material.opacity = 0);
-            removeDecals()
-            var cube = mesh.children.find(e => e.name == `${obj.id}`)
-            cube.material.opacity = 1;
-            addFont(cube, obj);
-            angle = Math.atan2(obj.position.z - finalPosition.z, obj.position.x - finalPosition.x);
-            console.log(angle)
-            camera.position.set(obj.position.x, obj.position.y, obj.position.z)
-            camera.lookAt(cube.position);
-            // 创建一个模拟的鼠标滚轮事件
-            const wheelEvent = new MouseEvent('wheel', {
-                bubbles: true,
-                cancelable: true,
-                view: window,
-                deltaY: 5
-            });
-            // 获取需要触发滚轮事件的元素
-            const element = document.querySelector('canvas');
-            // 触发滚轮事件
-            element.dispatchEvent(wheelEvent);
+            camera.position.set(finalPosition.x, finalPosition.y, finalPosition.z)
+            camera.lookAt(finalPosition);
+            setTimeout(() => {
+                mesh.children.forEach(e => e.material.opacity = 0);
+                removeDecals()
+                var cube = mesh.children.find(e => e.name == `${obj.id}`)
+                cube.material.opacity = 1;
+                addFont(cube, obj);
+                angle = Math.atan2(obj.position.z - finalPosition.z, obj.position.x - finalPosition.x);
+                console.log(angle)
+                camera.position.set(obj.position.x, obj.position.y, obj.position.z)
+                camera.lookAt(cube.position);
+                // 创建一个模拟的鼠标滚轮事件
+                const wheelEvent = new MouseEvent('wheel', {
+                    bubbles: true,
+                    cancelable: true,
+                    view: window,
+                    deltaY: 5
+                });
+                // 获取需要触发滚轮事件的元素
+                const element = document.querySelector('canvas');
+                // 触发滚轮事件
+                element.dispatchEvent(wheelEvent);
+            }, 100);
         }
     </script>
 </body>
