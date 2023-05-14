@@ -100,7 +100,7 @@
 
         div.search-box input {
             outline: none;
-            border: 5 solid #e7ae9b;
+            border: 1px solid #e7ae9b;
             margin-left: 12px;
             padding-left: 8px;
             outline-style: none;
@@ -110,6 +110,7 @@
 
 <body>
     <div id="container"></div>
+    <div class="acupoints-name">文本</div>
     <div class="menu-button">
         <img src="./imgs/menu.png">
     </div>
@@ -120,7 +121,7 @@
         <div class="menu-list"></div>
     </div>
     <div class="search-box">
-        <label for="input-acupoints">穴位:</label>
+        <label for="input-acupoints">穴位: </label>
         <input list="acupoints-data-list" id="input-acupoints" name="input-acupoints" placeholder="请输入穴位">
     </div>
     <datalist id="acupoints-data-list"></datalist>
@@ -146,7 +147,10 @@
         import { FontLoader } from 'three/addons/loaders/FontLoader.js';
         import { TextGeometry } from 'three/addons/geometries/TextGeometry.js';
         import { DecalGeometry } from 'three/addons/geometries/DecalGeometry.js';
-        // import { ShapeBufferGeometry } from 'three/addons/geometries/ShapeBufferGeometry.js';
+        import {
+            CSS2DRenderer,
+            CSS2DObject,
+        } from "three/addons/renderers/CSS2DRenderer.js";
 
         const MyUtils = {
             textureToCanvas: function (texture) {
@@ -165,12 +169,14 @@
         var preLoadMeshList = [];
 
         const container = document.getElementById('container');
-        let renderer, scene, camera, canvas, texture, targetObject;
+        let renderer, scene, camera, canvas, texture, targetObject, angle;
         let mesh;
         let raycaster;
         let line;
         const position = new THREE.Vector3();
         const decals = [];
+        let finalPosition;
+        let objPosition;
 
         const intersection = {
             intersects: false,
@@ -198,6 +204,7 @@
             renderer = new THREE.WebGLRenderer({ antialias: true });
             renderer.setPixelRatio(window.devicePixelRatio);
             renderer.setSize(window.innerWidth, window.innerHeight);
+            container.innerHTML = '';
             container.appendChild(renderer.domElement);
             renderer.setClearColor(0xcccccc);
 
@@ -337,6 +344,9 @@
                     object.position.set(-x1, -y1, -z1); // 将模型进行偏移
                     renderer.toneMapping = THREE.ACESFilmicToneMapping;
                     renderer.outputEncoding = THREE.sRGBEncoding;
+                    object.position.set(-x1, -y1, -z1); // 将模型进行偏移
+                    objPosition = object.position;
+                    finalPosition = camera.position;
                 });
             });
 
@@ -365,39 +375,56 @@
 
         function addFont(m, model) {
             console.log(m)
-            new FontLoader().load('fonts/helvetiker_regular.typeface.json', function (font) {
-                // // 创建文本几何体
-                const textGeometry = new TextGeometry('Hello, world!', {
-                    font: font,
-                    size: 1,
-                    height: 0.5,
-                    curveSegments: 12,
-                    bevelEnabled: false,
-                    bevelThickness: 0.1,
-                    bevelSize: 0.1,
-                    bevelSegments: 0.1
+            const fontLoader = new FontLoader();
+            fontLoader.load('fonts/FZKai-Z03S_Regular.json', function (font) {
+                console.log('font', font)
+                var text = model.name;
+                var geometry = new TextGeometry(text, {
+                    font: font,          // 字体格式
+                    size: 1,           // 字体大小
+                    height: 0.1,          // 字体深度
+                    curveSegments: 11,  // 曲线控制点数
+                    bevelEnabled: false, // 斜角
+                    bevelThickness: 0.1,  // 斜角的深度
+                    bevelSize: 1,       // 斜角的大小
+                    bevelSegments: 1    // 斜角段数
                 });
-
-                // 创建基础材质，设置文本颜色
-                const material = new THREE.MeshBasicMaterial({ color: 0xff0000 });
-                // 创建 Mesh 对象，将文本几何体和材质作为参数传递
-                const textMesh = new THREE.Mesh(textGeometry, material);
-                // textMesh.position.set(model.position.x, model.position.y, model.position.z)
-                var matrix = new THREE.Matrix4();
-                matrix.makeTranslation(model.position.x, model.position.y, model.position.z);
-                textMesh.matrix = matrix;
-                textMesh.position.setFromMatrixPosition(matrix);
-                textMesh.rotation.setFromRotationMatrix(matrix);
-                // 将 Mesh 对象添加到 Object3D 模型中
-                mesh.attach(textMesh);
-
-            })
+                var mat = new THREE.MeshPhongMaterial({
+                    color: "red",
+                    opacity: 0.8,
+                    shininess: 1,
+                });
+                var mesh1 = new THREE.Mesh(geometry, mat);
+                mesh1.needsUpdate = true;
+                var z = angle;
+                var x = 0
+                var y = 0
+                if (angle < -2.5) {
+                    z = -1 * angle;
+                    x = angle / 3;
+                    mesh1.rotation.y = - angle / 3;
+                } else if (angle < -1.5) {
+                    z = -angle - 1;
+                    x = -angle / 2;
+                    mesh1.rotation.y = angle / 2;
+                } else if (angle <= 0) {
+                    z = angle;
+                    x = -angle / 3;
+                    mesh1.rotation.y = - angle;
+                } else {
+                    z = -1 * angle / 2;
+                    x = -1 * angle / 2;
+                    mesh1.rotation.y = angle / 2;
+                }
+                mesh1.position.set(model.position.x - 1, model.position.y + y, model.position.z + z);
+                mesh.attach(mesh1);
+                decals.push(mesh1);
+            });
         }
 
         function removeDecals() {
             decals.forEach(function (d) {
-                targetObject.children[0].children.splice(targetObject.children[0].children.indexOf(d), 1);
-                // scene.remove( d );
+                mesh.remove(d);
             });
             decals.length = 0;
         }
@@ -433,7 +460,6 @@
                 mesh1.rotation.setFromRotationMatrix(matrix);
                 mesh1.name = `${model.id}`;
                 mesh.attach(mesh1);
-                // addFont(mesh1, model)
             }
         }
 
@@ -500,13 +526,15 @@
 
         function onAcupointsValueChanged(e) {
             const ele = document.querySelector('#acupoints-data-list')
-            const option = ele.querySelector(`option[value=${e.target.value}]`)
-            const id = option.dataset.id
-            for (var d of man) {
-                const v = d.acupoints.find(v => v.id == id)
-                if (v) {
-                    onAcupointsClick(v)
-                    return;
+            const option = ele && ele.querySelector(`option[value=${e.target.value}]`)
+            const id = option && option.dataset.id
+            if (id) {
+                for (var d of man) {
+                    const v = d.acupoints.find(v => v.id == id)
+                    if (v) {
+                        onAcupointsClick(v)
+                        return;
+                    }
                 }
             }
 
@@ -517,12 +545,13 @@
         document.querySelector('#input-acupoints').addEventListener('change', onAcupointsValueChanged);
 
         function onAcupointsClick(obj) {
+            mesh.children.forEach(e => e.material.opacity = 0);
+            removeDecals()
             var cube = mesh.children.find(e => e.name == `${obj.id}`)
-            // // targetObject.scale.set(1, 1, 1)
-            // // animate();
-            console.log(cube)
             cube.material.opacity = 1;
             addFont(cube, obj);
+            angle = Math.atan2(obj.position.z - finalPosition.z, obj.position.x - finalPosition.x);
+            console.log(angle)
             camera.position.set(obj.position.x, obj.position.y, obj.position.z)
             camera.lookAt(cube.position);
             // 创建一个模拟的鼠标滚轮事件
@@ -530,43 +559,12 @@
                 bubbles: true,
                 cancelable: true,
                 view: window,
-                deltaY: 30 // 模拟向上滚动100像素
+                deltaY: 5
             });
-
             // 获取需要触发滚轮事件的元素
             const element = document.querySelector('canvas');
             // 触发滚轮事件
             element.dispatchEvent(wheelEvent);
-
-            // let box = new THREE.Box3().setFromObject(object); // 获取模型的包围盒
-            // let mdlen = box.max.x - box.min.x; // 模型长度
-            // let mdwid = box.max.z - box.min.z; // 模型宽度
-            // let mdhei = box.max.y - box.min.y; // 模型高度
-            // let x1 = box.min.x + mdlen / 2; // 模型中心点坐标X
-            // let y1 = box.min.y + mdhei / 2; // 模型中心点坐标Y
-            // let z1 = box.min.z + mdwid / 2; // 模型中心点坐标Z
-            // object.position.set(-x1, -y1, -z1); // 将模型进行偏移
-            // renderer.toneMapping = THREE.ACESFilmicToneMapping;
-            // renderer.outputEncoding = THREE.sRGBEncoding;
-            // animate();
-            // // const position = new THREE.Vector3();
-            // // cube.getWorldPosition(position);
-            // // targetObject.position.copy(position);
-            // // targetObject.lookAt(cube.position);
-            // // 获取 Mesh 对象的世界坐标、朝向和缩放比例
-            // const meshWorldPos = new THREE.Vector3();
-            // cube.getWorldPosition(meshWorldPos);
-
-            // const meshWorldQuaternion = new THREE.Quaternion();
-            // cube.getWorldQuaternion(meshWorldQuaternion);
-
-            // const meshWorldScale = new THREE.Vector3();
-            // cube.getWorldScale(meshWorldScale);
-
-            // // 将 Mesh 的世界坐标、朝向和缩放比例应用到 Object3D 上
-            // targetObject.position.copy(meshWorldPos);
-            // targetObject.quaternion.copy(meshWorldQuaternion);
-            // // targetObject.scale.copy(meshWorldScale);
         }
     </script>
 </body>
