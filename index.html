@@ -374,6 +374,35 @@
             // }
         }
 
+        function addFont2(cube, model) {
+            // Create text geometry
+            const fontLoader = new FontLoader();
+            fontLoader.load('fonts/Microsoft_JhengHei_Regular.json', function (font) {
+                var textGeometry = new THREE.TextGeometry(model.name || '', {
+                    font: font,
+                    size: 0.2,
+                    height: 0.1
+                });
+                var textMaterial = new THREE.MeshBasicMaterial({ color: 0x0000ff });
+                var textMesh = new THREE.Mesh(textGeometry, textMaterial);
+                // Position the text above the mesh
+                textMesh.position.copy(cube.position);
+                textMesh.position.y += 1;
+                // Add the text mesh to the scene
+                scene.add(textMesh);
+                // Set camera position
+                camera.position.z = 5;
+                // Render the scene
+                function animate() {
+                    requestAnimationFrame(animate);
+                    cube.rotation.x += 0.01;
+                    cube.rotation.y += 0.01;
+                    renderer.render(scene, camera);
+                }
+                animate();
+            });
+        }
+
         function addFont(m, model) {
             console.log(m)
             const fontLoader = new FontLoader();
