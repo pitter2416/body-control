@@ -436,6 +436,36 @@
             });
         }
 
+        function addFont3(m, model) {
+            // Create a WebGLRenderer for the 3D scene
+            // var renderer3D = new THREE.WebGLRenderer();
+            // renderer3D.setSize(window.innerWidth, window.innerHeight);
+            // document.body.appendChild(renderer3D.domElement);
+
+            // Create a CSS3DRenderer for the text overlay
+            var rendererCSS = new CSS3DRenderer();
+            rendererCSS.setSize(window.innerWidth, window.innerHeight);
+            rendererCSS.domElement.style.position = 'absolute';
+            rendererCSS.domElement.style.top = 0;
+            document.body.appendChild(rendererCSS.domElement);
+
+            // Create a text description
+            var textElement = document.createElement('div');
+            textElement.textContent = 'This is a description';
+            textElement.style.position = 'absolute';
+            textElement.style.color = 'white';
+            textElement.style.top = '50px';
+            textElement.style.left = '50px';
+
+            // Create a CSS3DObject to hold the text element
+            var textObject = new CSS3DObject(textElement);
+            textObject.position.copy(m.position); // Position the text next to the mesh
+            textObject.position.x += 1.5; // Adjust the position as needed
+            textObject.scale.set(0.01, 0.01, 0.01); // Adjust the scale of the text as needed
+            mesh.attach(textObject);
+            rendererCSS.render(scene, camera);
+        }
+
         function removeDecals() {
             decals.forEach(function (d) {
                 mesh.remove(d);
