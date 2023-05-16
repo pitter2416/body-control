@@ -348,8 +348,6 @@
                     object.position.set(-x1, -y1, -z1); // 将模型进行偏移
                     objPosition = object.position;
                     finalPosition = camera.position;
-
-
                 });
             });
 
@@ -517,7 +515,7 @@
                     var text = model.name;
                     var geometry = new TextGeometry(text, {
                         font: font,          // 字体格式
-                        size: 0.60,           // 字体大小
+                        size: 0.80,           // 字体大小
                         height: 0.01,          // 字体深度
                         curveSegments: 11,  // 曲线控制点数
                         bevelEnabled: false, // 斜角
@@ -534,7 +532,7 @@
                     var mesh2 = new THREE.Mesh(geometry, mat);
                     mesh2.needsUpdate = true;
                     mesh2.position.copy(model.position)
-                    mesh2.position.z *= 1.2
+                    mesh2.position.z *= 1.6
                     mesh2.name = `${model.id}`;
                     mesh2.rotation.y += !!model.offset ? model.offset.rotationY : 0.05
                     mesh.attach(mesh2);
@@ -634,7 +632,7 @@
                 // addFont(cube, obj);
                 angle = Math.atan2(obj.position.z - finalPosition.z, obj.position.x - finalPosition.x);
                 console.log(angle)
-                camera.position.set((obj.position.x + obj.x) / 1.5, (obj.position.y + obj.y) / 1.5, (obj.position.z + obj.z) / 1.5)
+                camera.position.set((obj.position.x + obj.x) / (1 - angle), (obj.position.y + obj.y) / (1 - angle), (obj.position.z + obj.z) / 0.08)
                 // 创建一个模拟的鼠标滚轮事件
                 // 触发滚轮事件
                 const wheelEvt = document.createEvent('MouseEvents');
