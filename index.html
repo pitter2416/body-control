@@ -298,6 +298,9 @@
                     positions.needsUpdate = true;
                     intersection.intersects = true;
                     intersects.length = 0;
+
+
+                    showMesh(p)
                 } else {
                     intersection.intersects = false;
                 }
@@ -355,6 +358,7 @@
 
         function shoot() {
             position.copy(intersection.point);
+
             // // 创建一个圆球的几何体
             // const radius = 0.2; // 圆球的半径
             // const widthSegments = 12; // 球体宽度上的分段数
@@ -538,6 +542,15 @@
                     mesh.attach(mesh2);
                 }
             });
+        }
+
+        function showMesh(position) {
+            const cube = mesh.children.find(e=>e.position.x == position.x && e.position.y == position.y && e.position.z == position.z);
+            if(cube == null) return;
+            mesh.children.forEach(e => e.material.opacity = 0);
+            removeDecals()
+            var cubes = mesh.children.filter(e => e.name == `${obj.id}`)
+            cubes.forEach(cube => cube.material.opacity = 1);
         }
 
         document.querySelector('.menu-button').addEventListener('click', function (e) {
