@@ -153,6 +153,42 @@
             CSS2DObject,
         } from "three/addons/renderers/CSS2DRenderer.js";
 
+        class Cube extends THREE.Mesh {
+            constructor() {
+                super()
+                // 创建一个圆球的几何体
+                this.geometry = new THREE.SphereGeometry(0.3, 15, 15);
+                // 创建一个材质
+                this.material = new THREE.MeshBasicMaterial({ color: 0xff0000, transparent: true, opacity: 0 });
+                this.cubeSize = 0
+                this.cubeActive = false
+            }
+
+            render() {
+                this.rotation.x = this.rotation.y += 0.01
+            }
+
+            onResize(width, height, aspect) {
+                this.cubeSize = (height * aspect) / 5
+                this.scale.setScalar(this.cubeSize * (this.cubeActive ? 1.5 : 1))
+            }
+
+            onPointerOver(e) {
+                this.material.color.set('hotpink')
+                this.material.color.convertSRGBToLinear()
+            }
+
+            onPointerOut(e) {
+                this.material.color.set('orange')
+                this.material.color.convertSRGBToLinear()
+            }
+
+            onClick(e) {
+                this.cubeActive = !this.cubeActive
+                this.scale.setScalar(this.cubeSize * (this.cubeActive ? 1.5 : 1))
+            }
+        }
+        console.log('Cube',Cube)
         const MyUtils = {
             textureToCanvas: function (texture) {
                 const canvas = document.createElement('canvas');
@@ -280,9 +316,6 @@
                 raycaster.setFromCamera(mouse, camera);
                 raycaster.intersectObject(mesh, false, intersects);
                 if (intersects.length > 0) {
-                    if (flag) {
-                        // console.dir(intersects[0]);
-                    }
                     const p = intersects[0].point;
                     mouseHelper.position.copy(p);
                     intersection.point.copy(p);
@@ -298,9 +331,9 @@
                     positions.needsUpdate = true;
                     intersection.intersects = true;
                     intersects.length = 0;
-
-
-                    showMesh(p)
+                    if (flag) {
+                        // showMesh(p)
+                    }
                 } else {
                     intersection.intersects = false;
                 }
@@ -382,7 +415,6 @@
             // Create text geometry
             const fontLoader = new FontLoader();
             fontLoader.load('fonts/Microsoft_JhengHei_Regular.json', function (font) {
-                console.log('font', font)
                 var text = model.name;
                 var geometry = new TextGeometry(text, {
                     font: font,          // 字体格式
@@ -411,10 +443,8 @@
         }
 
         function addFont2(m, model) {
-            console.log(m)
             const fontLoader = new FontLoader();
             fontLoader.load('fonts/FZKai-Z03S_Regular.json', function (font) {
-                console.log('font', font)
                 var text = model.name;
                 var geometry = new TextGeometry(text, {
                     font: font,          // 字体格式
@@ -493,15 +523,8 @@
         function preRender() {
             for (var i = 0; i < preLoadMeshList.length; i++) {
                 var model = preLoadMeshList[i];
-                // 创建一个圆球的几何体
-                const radius = 0.3; // 圆球的半径
-                const widthSegments = 15; // 球体宽度上的分段数
-                const heightSegments = 15; // 球体高度上的分段数
-                const geometry = new THREE.SphereGeometry(radius, widthSegments, heightSegments);
-                // 创建一个材质
-                const material = new THREE.MeshBasicMaterial({ color: 0xff0000, transparent: true, opacity: 0 });
                 // 创建一个圆球的网格模型
-                var mesh1 = new THREE.Mesh(geometry, material);
+                var mesh1 = new Cube();
                 // Set the transformation matrix
                 var matrix = new THREE.Matrix4();
                 matrix.makeTranslation(model.x, model.y, model.z);
@@ -515,7 +538,6 @@
             fontLoader.load('fonts/Microsoft_JhengHei_Regular.json', function (font) {
                 for (var i = 0; i < preLoadMeshList.length; i++) {
                     var model = preLoadMeshList[i];
-                    console.log('font', font)
                     var text = model.name;
                     var geometry = new TextGeometry(text, {
                         font: font,          // 字体格式
@@ -546,6 +568,7 @@
 
         function showMesh(position) {
             const cube = mesh.children.find(e=>e.position.x == position.x && e.position.y == position.y && e.position.z == position.z);
+            
             if(cube == null) return;
             mesh.children.forEach(e => e.material.opacity = 0);
             removeDecals()
