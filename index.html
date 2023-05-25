@@ -121,8 +121,8 @@
         <div class="menu-list"></div>
     </div>
     <div class="search-box">
-        <label for="input-acupoints">穴位: </label>
-        <input list="acupoints-data-list" id="input-acupoints" name="input-acupoints" placeholder="请输入穴位">
+        <label for="input-acupoints">选择: </label>
+        <input list="acupoints-data-list" id="input-acupoints" name="input-acupoints" placeholder="请输入名称">
     </div>
     <datalist id="acupoints-data-list"></datalist>
     <script async src="https://unpkg.com/es-module-shims@1.6.3/dist/es-module-shims.js"></script>
@@ -135,7 +135,7 @@
         }
     </script>
     <script type="module">
-        import { man } from './models/man.js'
+        import { man } from './models/test/Vase.js'//from './models/man.js'
         import { TWEEN } from 'https://unpkg.com/three@0.139.0/examples/jsm/libs/tween.module.min.js';
         import * as THREE from 'three';
         import { GUI } from 'three/addons/libs/lil-gui.module.min.js';
@@ -159,7 +159,7 @@
                 // 创建一个圆球的几何体
                 this.geometry = new THREE.SphereGeometry(0.3, 15, 15);
                 // 创建一个材质
-                this.material = new THREE.MeshBasicMaterial({ color: 0xff0000, transparent: true, opacity: 0 });
+                this.material = new THREE.MeshBasicMaterial({ color: 0xff0000, transparent: true, opacity: 1 });
                 this.cubeSize = 0
                 this.cubeActive = false
             }
@@ -188,7 +188,7 @@
                 this.scale.setScalar(this.cubeSize * (this.cubeActive ? 1.5 : 1))
             }
         }
-        console.log('Cube',Cube)
+
         const MyUtils = {
             textureToCanvas: function (texture) {
                 const canvas = document.createElement('canvas');
@@ -315,6 +315,7 @@
                 mouse.y = - (y / window.innerHeight) * 2 + 1;
                 raycaster.setFromCamera(mouse, camera);
                 raycaster.intersectObject(mesh, false, intersects);
+                var objectIntersects = raycaster.intersectObjects( mesh.children );
                 if (intersects.length > 0) {
                     const p = intersects[0].point;
                     mouseHelper.position.copy(p);
@@ -332,7 +333,9 @@
                     intersection.intersects = true;
                     intersects.length = 0;
                     if (flag) {
-                        // showMesh(p)
+                        if(objectIntersects.length > 0) {
+                            showMesh(objectIntersects[0].object)
+                        }
                     }
                 } else {
                     intersection.intersects = false;
@@ -344,19 +347,19 @@
 
         }
         var loader = new THREE.TextureLoader();
-        texture = loader.load("models/ren_maps/RenTi_MediumColor.jpg");
+        texture = loader.load("models/test//Vase.jpg");
 
         function loadLeePerrySmith() {
             // // 创建一个 OBJLoader 和 MTLLoader
             var objLoader = new OBJLoader();
             var mtlLoader = new MTLLoader();
             // 使用 MTLLoader 加载 MTL 文件
-            mtlLoader.load('models/man.mtl', function (materials) {
+            mtlLoader.load('models/test/Vase.mtl', function (materials) {
                 // 将材质应用于 OBJLoader 加载的对象
                 materials.preload();
                 objLoader.setMaterials(materials);
                 // 使用 OBJLoader 加载 OBJ 文件
-                objLoader.load('models/man.obj', function (object) {
+                objLoader.load('models/test/Vase.obj', function (object) {
                     mesh = object.children[0];
                     object.traverse(function (child) {
                         if (child instanceof THREE.Mesh) {
@@ -392,7 +395,7 @@
         function shoot() {
             position.copy(intersection.point);
 
-            // // 创建一个圆球的几何体
+            // 创建一个圆球的几何体
             // const radius = 0.2; // 圆球的半径
             // const widthSegments = 12; // 球体宽度上的分段数
             // const heightSegments = 12; // 球体高度上的分段数
@@ -406,7 +409,7 @@
             // decals.push(sphere);
             // mesh.attach(sphere)
             // list.push({ id: index++, position: { x: position.x, y: position.y, z: position.z }, x: sphere.matrix.elements[12], y: sphere.matrix.elements[13], z: sphere.matrix.elements[14] })
-            // if (list.length == 51) {
+            // if (list.length == 10) {
             //     console.log(list)
             // }
         }
@@ -434,9 +437,9 @@
                 var mesh1 = new THREE.Mesh(geometry, mat);
                 mesh1.needsUpdate = true;
                 mesh1.position.copy(model.position);
-                mesh1.position.y += 0.05
-                mesh1.position.z += !!model.offset ? model.offset.z : 0.05
-                mesh1.rotation.y += !!model.offset ? model.offset.rotationY : 0.05
+                mesh1.position.y += 0.5
+                // mesh1.position.z += !!model.offset ? model.offset.z : 0.05
+                // mesh1.rotation.y += !!model.offset ? model.offset.rotationY : 0.05
                 mesh.attach(mesh1);
                 decals.push(mesh1);
             });
@@ -534,46 +537,48 @@
                 mesh1.name = `${model.id}`;
                 mesh.attach(mesh1);
             }
-            const fontLoader = new FontLoader();
-            fontLoader.load('fonts/Microsoft_JhengHei_Regular.json', function (font) {
-                for (var i = 0; i < preLoadMeshList.length; i++) {
-                    var model = preLoadMeshList[i];
-                    var text = model.name;
-                    var geometry = new TextGeometry(text, {
-                        font: font,          // 字体格式
-                        size: 0.80,           // 字体大小
-                        height: 0.01,          // 字体深度
-                        curveSegments: 11,  // 曲线控制点数
-                        bevelEnabled: false, // 斜角
-                        bevelThickness: 0.1,  // 斜角的深度
-                        bevelSize: 1,       // 斜角的大小
-                        bevelSegments: 1    // 斜角段数
-                    });
-                    var mat = new THREE.MeshPhongMaterial({
-                        color: 0xff0000,
-                        transparent: true,
-                        opacity: 0,
-                        shininess: 1,
-                    });
-                    var mesh2 = new THREE.Mesh(geometry, mat);
-                    mesh2.needsUpdate = true;
-                    mesh2.position.copy(model.position)
-                    mesh2.position.z *= 1.6
-                    mesh2.name = `${model.id}`;
-                    mesh2.rotation.y += !!model.offset ? model.offset.rotationY : 0.05
-                    mesh.attach(mesh2);
-                }
-            });
+            // const fontLoader = new FontLoader();
+            // fontLoader.load('fonts/Microsoft_JhengHei_Regular.json', function (font) {
+            //     for (var i = 0; i < preLoadMeshList.length; i++) {
+            //         var model = preLoadMeshList[i];
+            //         var text = model.name;
+            //         var geometry = new TextGeometry(text, {
+            //             font: font,          // 字体格式
+            //             size: 0.80,           // 字体大小
+            //             height: 0.01,          // 字体深度
+            //             curveSegments: 11,  // 曲线控制点数
+            //             bevelEnabled: false, // 斜角
+            //             bevelThickness: 0.1,  // 斜角的深度
+            //             bevelSize: 1,       // 斜角的大小
+            //             bevelSegments: 1    // 斜角段数
+            //         });
+            //         var mat = new THREE.MeshPhongMaterial({
+            //             color: 0xff0000,
+            //             transparent: true,
+            //             opacity: 1,
+            //             shininess: 1,
+            //         });
+            //         var mesh2 = new THREE.Mesh(geometry, mat);
+            //         mesh2.needsUpdate = true;
+            //         mesh2.position.copy(model.position)
+            //         mesh2.position.z *= 1.6
+            //         mesh2.name = `${model.id}`;
+            //         mesh2.rotation.y += !!model.offset ? model.offset.rotationY : 0.05
+            //         mesh.attach(mesh2);
+                // }
+            // });
         }
 
-        function showMesh(position) {
-            const cube = mesh.children.find(e=>e.position.x == position.x && e.position.y == position.y && e.position.z == position.z);
-            
+        function showMesh(obj) {
+            const cube = mesh.children.find(e=>e==obj);
             if(cube == null) return;
-            mesh.children.forEach(e => e.material.opacity = 0);
-            removeDecals()
-            var cubes = mesh.children.filter(e => e.name == `${obj.id}`)
-            cubes.forEach(cube => cube.material.opacity = 1);
+            for (var d of man) {
+                const v = d.acupoints.find(v => v.id == obj.name)
+                if (v) {
+                    onAcupointsClick(v)
+                    return;
+                }
+            }
         }
 
         document.querySelector('.menu-button').addEventListener('click', function (e) {
@@ -661,11 +666,11 @@
             camera.position.set(finalPosition.x, finalPosition.y, finalPosition.z)
             animate();
             setTimeout(() => {
-                mesh.children.forEach(e => e.material.opacity = 0);
+                // mesh.children.filter() .forEach(e => e.material.opacity = 0);
                 removeDecals()
-                var cubes = mesh.children.filter(e => e.name == `${obj.id}`)
-                cubes.forEach(cube => cube.material.opacity = 1);
-                // addFont(cube, obj);
+                var cube = mesh.children.find(e => e.name == `${obj.id}`)
+                cube.material.opacity = 1;
+                addFont(cube, obj);
                 angle = Math.atan2(obj.position.z - finalPosition.z, obj.position.x - finalPosition.x);
                 console.log(angle)
                 camera.position.set((obj.position.x + obj.x) / (1 - angle), (obj.position.y + obj.y) / (1 - angle), (obj.position.z + obj.z) / 0.08)
