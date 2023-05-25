@@ -136,7 +136,7 @@
         }
     </script>
     <script type="module">
-        import { man } from './models/test/Vase.js'//from './models/man.js'
+        import { man } from './models/man.js'
         import { TWEEN } from 'https://unpkg.com/three@0.139.0/examples/jsm/libs/tween.module.min.js';
         import * as THREE from 'three';
         import { GUI } from 'three/addons/libs/lil-gui.module.min.js';
@@ -160,7 +160,7 @@
                 // 创建一个圆球的几何体
                 this.geometry = new THREE.SphereGeometry(0.3, 15, 15);
                 // 创建一个材质
-                this.material = new THREE.MeshBasicMaterial({ color: 0xff0000, transparent: true, opacity: 1 });
+                this.material = new THREE.MeshBasicMaterial({ color: 0xff0000, transparent: true, opacity: 0 });
                 this.cubeSize = 0
                 this.cubeActive = false
             }
@@ -348,19 +348,19 @@
 
         }
         var loader = new THREE.TextureLoader();
-        texture = loader.load("models/test//Vase.jpg");
+        texture = loader.load("models/ren_maps/RenTi_MediumColor.jpg");
 
         function loadLeePerrySmith() {
             // // 创建一个 OBJLoader 和 MTLLoader
             var objLoader = new OBJLoader();
             var mtlLoader = new MTLLoader();
             // 使用 MTLLoader 加载 MTL 文件
-            mtlLoader.load('models/test/Vase.mtl', function (materials) {
+            mtlLoader.load('models/man.mtl', function (materials) {
                 // 将材质应用于 OBJLoader 加载的对象
                 materials.preload();
                 objLoader.setMaterials(materials);
                 // 使用 OBJLoader 加载 OBJ 文件
-                objLoader.load('models/test/Vase.obj', function (object) {
+                objLoader.load('models/man.obj', function (object) {
                     mesh = object.children[0];
                     object.traverse(function (child) {
                         if (child instanceof THREE.Mesh) {
@@ -448,7 +448,7 @@
 
         function addFont2(m, model) {
             const fontLoader = new FontLoader();
-            fontLoader.load('fonts/FZKai-Z03S_Regular.json', function (font) {
+            fontLoader.load('fonts/Microsoft_JhengHei_Regular.json', function (font) {
                 var text = model.name;
                 var geometry = new TextGeometry(text, {
                     font: font,          // 字体格式
@@ -467,8 +467,10 @@
                 });
                 var mesh1 = new THREE.Mesh(geometry, mat);
                 mesh1.needsUpdate = true;
-                mesh1.rotation.y = ((model.y * angle) / 2 - (-angle - 1) / 2) / 2;
-                mesh1.position.set(model.position.x + model.x / 4, model.position.y, model.position.z - (1 - model.z));
+                // mesh1.rotation.y = ((model.y * angle) / 2 - (-angle - 1) / 2) / 2;
+                mesh1.position.copy(model.position);
+                mesh1.position.y += 0.5;
+                mesh1.position.z += 2.5;
                 mesh.attach(mesh1);
                 decals.push(mesh1);
             });
@@ -576,7 +578,11 @@
             for (var d of man) {
                 const v = d.acupoints.find(v => v.id == obj.name)
                 if (v) {
-                    onAcupointsClick(v)
+                    // onAcupointsClick(v)
+                    mesh.children.forEach(e => e.material.opacity = 0);
+                    removeDecals()
+                    cube.material.opacity = 1;
+                    addFont2(obj, v)
                     return;
                 }
             }
@@ -667,7 +673,7 @@
             camera.position.set(finalPosition.x, finalPosition.y, finalPosition.z)
             animate();
             setTimeout(() => {
-                // mesh.children.filter() .forEach(e => e.material.opacity = 0);
+                mesh.children.forEach(e => e.material.opacity = 0);
                 removeDecals()
                 var cube = mesh.children.find(e => e.name == `${obj.id}`)
                 cube.material.opacity = 1;
@@ -675,13 +681,13 @@
                 angle = Math.atan2(obj.position.z - finalPosition.z, obj.position.x - finalPosition.x);
                 console.log(angle)
                 camera.position.copy(obj.position)
-                // camera.position.set((obj.position.x + obj.x) / (1 - angle), (obj.position.y + obj.y) / (1 - angle), (obj.position.z + obj.z) / 0.08)
+                camera.position.set((obj.position.x + obj.x) / (1 - angle), (obj.position.y + obj.y) / (1 - angle), (obj.position.z + obj.z) / 0.08)
                 // 创建一个模拟的鼠标滚轮事件
                 // 触发滚轮事件
                 const wheelEvt = document.createEvent('MouseEvents');
                 wheelEvt.initEvent('wheel', true, true);
                 wheelEvt.deltaY = 10;
-                for(let i = 1; i < 20 + 1; i++) {
+                for(let i = 1; i < 11 + 1; i++) {
                     setTimeout(()=>{
                         document.querySelector('canvas').dispatchEvent(wheelEvt);
                     },i*50)
