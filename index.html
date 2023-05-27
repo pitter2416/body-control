@@ -154,42 +154,6 @@
             CSS2DObject,
         } from "three/addons/renderers/CSS2DRenderer.js";
 
-        class Cube extends THREE.Mesh {
-            constructor() {
-                super()
-                // 创建一个圆球的几何体
-                this.geometry = new THREE.SphereGeometry(0.3, 15, 15);
-                // 创建一个材质
-                this.material = new THREE.MeshBasicMaterial({ color: 0xff0000, transparent: true, opacity: 0 });
-                this.cubeSize = 0
-                this.cubeActive = false
-            }
-
-            render() {
-                this.rotation.x = this.rotation.y += 0.01
-            }
-
-            onResize(width, height, aspect) {
-                this.cubeSize = (height * aspect) / 5
-                this.scale.setScalar(this.cubeSize * (this.cubeActive ? 1.5 : 1))
-            }
-
-            onPointerOver(e) {
-                this.material.color.set('hotpink')
-                this.material.color.convertSRGBToLinear()
-            }
-
-            onPointerOut(e) {
-                this.material.color.set('orange')
-                this.material.color.convertSRGBToLinear()
-            }
-
-            onClick(e) {
-                this.cubeActive = !this.cubeActive
-                this.scale.setScalar(this.cubeSize * (this.cubeActive ? 1.5 : 1))
-            }
-        }
-
         const MyUtils = {
             textureToCanvas: function (texture) {
                 const canvas = document.createElement('canvas');
@@ -207,7 +171,7 @@
         var preLoadMeshList = [];
 
         const container = document.getElementById('container');
-        let renderer, scene, camera, canvas, texture, targetObject, angle;
+        let renderer, scene, camera, canvas, texture, targetObject, font;
         let mesh;
         let raycaster;
         let line;
@@ -222,7 +186,7 @@
             normal: new THREE.Vector3()
         };
 
-        const mouse = new THREE.Vector2();
+        var mouse = new THREE.Vector2();
         const intersects = [];
         let mouseHelper;
 
@@ -277,6 +241,9 @@
             mouseHelper = new THREE.Mesh(new THREE.BoxGeometry(1, 1, 10), new THREE.MeshNormalMaterial());
             mouseHelper.visible = false;
             scene.add(mouseHelper);
+            document.addEventListener('mousewheel', (event) => {
+                camera.position.z += event.deltaY / 500;
+            });
             window.addEventListener('resize', onWindowResize);
             let moved = false;
             controls.addEventListener('change', function () {
@@ -416,34 +383,41 @@
         }
 
         function addFont(m, model) {
-            // Create text geometry
-            const fontLoader = new FontLoader();
-            fontLoader.load('fonts/Microsoft_JhengHei_Regular.json', function (font) {
-                var text = model.name;
-                var geometry = new TextGeometry(text, {
-                    font: font,          // 字体格式
-                    size: 1,           // 字体大小
-                    height: 0.1,          // 字体深度
-                    curveSegments: 11,  // 曲线控制点数
-                    bevelEnabled: false, // 斜角
-                    bevelThickness: 0.1,  // 斜角的深度
-                    bevelSize: 1,       // 斜角的大小
-                    bevelSegments: 1    // 斜角段数
+            if(font == null) {
+                new FontLoader().load('fonts/Microsoft_JhengHei_Regular.json', function (f) {
+                    font = f;
+                    addText(m, model);
                 });
-                var mat = new THREE.MeshPhongMaterial({
-                    color: "red",
-                    opacity: 0.8,
-                    shininess: 1,
-                });
-                var mesh1 = new THREE.Mesh(geometry, mat);
-                mesh1.needsUpdate = true;
-                mesh1.position.copy(model.position);
-                mesh1.position.z += model.z < 0 ? -1.5 : 1.5
-                mesh1.rotation.y = model.z < 0 ? -Math.PI : mesh1.rotation.y
-                mesh1.position.x += (model.z < 0 && model.position.x > 9 && model.position.x < 13.5) ? 5 : 0.1
-                mesh.attach(mesh1);
-                decals.push(mesh1);
+            } else {
+                addText(m, model);
+            }
+        }
+
+        function addText(m, model) {
+            var text = model.name;
+            var geometry = new TextGeometry(text, {
+                font: font,          // 字体格式
+                size: 1.5,           // 字体大小
+                height: 0.1,          // 字体深度
+                curveSegments: 11,  // 曲线控制点数
+                bevelEnabled: false, // 斜角
+                bevelThickness: 0.1,  // 斜角的深度
+                bevelSize: 1,       // 斜角的大小
+                bevelSegments: 1    // 斜角段数
             });
+            var mat = new THREE.MeshPhongMaterial({
+                color: "blue",
+                opacity: 0.8,
+                shininess: 1,
+            });
+            var mesh1 = new THREE.Mesh(geometry, mat);
+            mesh1.needsUpdate = true;
+            mesh1.position.copy(model.position);
+            mesh1.position.z += model.z < 0 ? -1.5 : 1.5
+            mesh1.rotation.y = model.z < 0 ? -Math.PI : mesh1.rotation.y
+            mesh1.position.x += (model.z < 0 && model.position.x > 9 && model.position.x < 13.5) ? 5 : 0.1
+            mesh.attach(mesh1);
+            decals.push(mesh1);
         }
 
         function removeDecals() {
@@ -468,8 +442,11 @@
         function preRender() {
             for (var i = 0; i < preLoadMeshList.length; i++) {
                 var model = preLoadMeshList[i];
-                // 创建一个圆球的网格模型
-                var mesh1 = new Cube();
+                // 创建一个圆球的几何体
+                var geometry = new THREE.SphereGeometry(0.5, 20, 20);
+                // 创建一个材质
+                var material = new THREE.MeshBasicMaterial({ color: 0x0000ff, transparent: true, opacity: 0 });
+                var mesh1 = new THREE.Mesh(geometry, material)
                 // Set the transformation matrix
                 var matrix = new THREE.Matrix4();
                 matrix.makeTranslation(model.x, model.y, model.z);
@@ -577,30 +554,117 @@
         setSearchBoxDataList();
 
         document.querySelector('#input-acupoints').addEventListener('change', onAcupointsValueChanged);
-
+        var currentObj;
+        var changed = false;
         function onAcupointsClick(obj) {
-            setTimeout(() => {
-                mesh.children.forEach(e => e.material.opacity = 0);
-                removeDecals()
-                var cube = mesh.children.find(e => e.name == `${obj.id}`)
-                cube.material.opacity = 1;
-                addFont(cube, obj);
-                angle = Math.atan2(obj.position.z - finalPosition.z, obj.position.x - finalPosition.x);
-                camera.position.copy(obj.position)
-                var x = (obj.z < 0 ? 1 : -1) * (obj.y / obj.position.y - 1)
-                var y = (obj.z < 0 ? 1 : -1) * (obj.y / obj.position.y - 1)
-                var z = (obj.z < 0 ? -1 : 1) * (obj.y / obj.position.y - 1)
-                camera.position.x += x
-                camera.position.y += y
-                camera.position.z += z
-                // 创建一个模拟的鼠标滚轮事件
-                // 触发滚轮事件
+            mesh.children.forEach(e => e.material.opacity = 0);
+            removeDecals()
+            var cube = mesh.children.find(e => e.name == `${obj.id}`)
+            cube.material.opacity = 1;
+            addFont(cube, obj);
+
+            var p1 = {
+                "x": -1.1939713519864394,
+                "y": 2.693668568322245,
+                "z": 2.3323370306122655,
+            }
+            var p2 = {
+                "x": -1.3642906221490927,
+                "y": 6.647416889927825,
+                "z": -6.2312180591067445,
+            }
+
+            var p3 = {
+                "x": (obj.position.x + obj.position.x) / 0.8,
+                "y": 25.706226638635073,
+                "z": (obj.position.z + obj.position.z) / 0.8,
+            }
+            camera.position.copy(obj.z < 0 ? p2 : p1)
+            if(!changed) {
+                changed = true;
                 const wheelEvt1 = document.createEvent('MouseEvents');
-                wheelEvt1.initEvent('wheel', true, true);
-                wheelEvt1.deltaY = 5;
-                document.querySelector('canvas').dispatchEvent(wheelEvt1);
-            }, 500);
+                wheelEvt1.deltaY = -10
+                // Initializing the event
+                wheelEvt1.initMouseEvent(
+                    'wheel',    // type of event (e.g., 'click', 'mousemove', 'mousedown')
+                    true,       // bubbles (event will bubble up through the DOM)
+                    true,       // cancelable (event can be canceled)
+                )
+
+                for (let i = 1; i <= 10; i++) {
+                    setTimeout(() => {
+                        document.querySelector('canvas').dispatchEvent(wheelEvt1);
+                    }, i * 30);
+                }
+            }
+
+            setTimeout(() => {
+                currentObj = obj;
+                const wheelEvt1 = document.createEvent('MouseEvents');
+                wheelEvt1.deltaY = 10
+                // Initializing the event
+                wheelEvt1.initMouseEvent(
+                    'wheel',    // type of event (e.g., 'click', 'mousemove', 'mousedown')
+                    true,       // bubbles (event will bubble up through the DOM)
+                    true,       // cancelable (event can be canceled)
+                )
+
+                for (let i = 1; i <= 10; i++) {
+                    setTimeout(() => {
+                        document.querySelector('canvas').dispatchEvent(wheelEvt1);
+                    }, i * 50);
+                }
+                setTimeout(() => {
+                    currentObj = undefined; 
+                }, 500);
+            }, 300);
+            
         }
+
+        function getMouseScale() {
+            // Calculate the distance of the mouse from the center of the screen
+            const distance = mouse.length();
+
+            // Define the maximum scale value you want to achieve
+            const maxScale = 2.0;
+
+            // Map the distance value to the scale range (0 to maxScale)
+            const scale = distance * maxScale;
+
+            // Ensure the scale value doesn't exceed the maximum scale
+            return Math.min(scale, maxScale);
+        }
+
+    
+        function onMouseWheel(event) {
+            console.log(camera.position)
+            if(!currentObj) return;
+            event.preventDefault();
+            if(camera.position.y > 52 || camera.position.y < 10) {
+                camera.position.y = 52
+                // if (camera.position.x > currentObj.x) {
+                //     camera.position.x = currentObj.x
+                // }  
+                // if (camera.position.z < currentObj.z) {
+                //     camera.position.z = currentObj.z
+                // }
+
+                if(camera.position.x < -54) {
+                    camera.position.x = -54
+                }
+
+                if (camera.position.z > 92) {
+                    camera.position.z = 92
+                }
+
+
+            } else {
+                camera.position.y += event.deltaY / 1000;
+            } 
+        }
+
+        window.addEventListener('wheel', onMouseWheel, false);
+
     </script>
 </body>
 
