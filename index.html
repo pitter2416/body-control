@@ -203,6 +203,9 @@
         animate();
 
         function init() {
+            new FontLoader().load('fonts/Microsoft_JhengHei_Regular.json', function (f) {
+                font = f;
+            });
             renderer = new THREE.WebGLRenderer({ antialias: true });
             renderer.setPixelRatio(window.devicePixelRatio);
             renderer.setSize(window.innerWidth, window.innerHeight);
@@ -241,9 +244,7 @@
             mouseHelper = new THREE.Mesh(new THREE.BoxGeometry(1, 1, 10), new THREE.MeshNormalMaterial());
             mouseHelper.visible = false;
             scene.add(mouseHelper);
-            document.addEventListener('mousewheel', (event) => {
-                camera.position.z += event.deltaY / 500;
-            });
+          
             window.addEventListener('resize', onWindowResize);
             let moved = false;
             controls.addEventListener('change', function () {
@@ -268,6 +269,7 @@
             window.addEventListener('pointermove', onPointerMove);
 
             function onPointerMove(event) {
+                if (currentObj) return
                 if (event.isPrimary) {
                     checkIntersection(event.clientX, event.clientY);
                 }
@@ -383,21 +385,15 @@
         }
 
         function addFont(m, model) {
-            if(font == null) {
-                new FontLoader().load('fonts/Microsoft_JhengHei_Regular.json', function (f) {
-                    font = f;
-                    addText(m, model);
-                });
-            } else {
-                addText(m, model);
-            }
+            if(font == null) return;
+            addText(m, model);
         }
 
         function addText(m, model) {
             var text = model.name;
             var geometry = new TextGeometry(text, {
                 font: font,          // 字体格式
-                size: 1.5,           // 字体大小
+                size: 1.2,           // 字体大小
                 height: 0.1,          // 字体深度
                 curveSegments: 11,  // 曲线控制点数
                 bevelEnabled: false, // 斜角
@@ -406,8 +402,8 @@
                 bevelSegments: 1    // 斜角段数
             });
             var mat = new THREE.MeshPhongMaterial({
-                color: "blue",
-                opacity: 0.8,
+                color: "rgb(0,0,250)",
+                opacity: 0.3,
                 shininess: 1,
             });
             var mesh1 = new THREE.Mesh(geometry, mat);
@@ -416,6 +412,20 @@
             mesh1.position.z += model.z < 0 ? -1.5 : 1.5
             mesh1.rotation.y = model.z < 0 ? -Math.PI : mesh1.rotation.y
             mesh1.position.x += (model.z < 0 && model.position.x > 9 && model.position.x < 13.5) ? 5 : 0.1
+            if(model.position.y > -40 && model.position.y<-36 ) {
+                mesh1.position.y += 1;
+                mesh1.position.x += model.position.x;
+            } else if(model.position.y > -42 && model.position.y <= -40) {
+                mesh1.position.y -= 1.5;
+            } else if (model.position.y > 33.05 && model.position.y <= 37.5) {
+                if(model.position.z < -1) {
+                    mesh1.position.x += 1.8*model.name.length;
+                } else {
+                    mesh1.position.x -= 1.8 * model.name.length;
+                }
+            } else if(model.position.y == 9.356680189579848) {
+               mesh1.position.x += 3.2;
+            }
             mesh.attach(mesh1);
             decals.push(mesh1);
         }
@@ -557,6 +567,7 @@
         var currentObj;
         var changed = false;
         function onAcupointsClick(obj) {
+            var scale = false;
             mesh.children.forEach(e => e.material.opacity = 0);
             removeDecals()
             var cube = mesh.children.find(e => e.name == `${obj.id}`)
@@ -580,6 +591,10 @@
                 "z": (obj.position.z + obj.position.z) / 0.8,
             }
             camera.position.copy(obj.z < 0 ? p2 : p1)
+            if([3.803792830923257, -41.16780364415135, -40.91256046796157].indexOf(obj.position.y) != -1) {
+                camera.position.copy(obj.position)
+                scale = true;
+            }
             const wheelEvt1 = document.createEvent('MouseEvents');
             wheelEvt1.deltaY = -10
             // Initializing the event
@@ -589,36 +604,54 @@
                 true,       // cancelable (event can be canceled)
             )
 
-            for (let i = 1; i <= 1; i++) {
+            for (let i = 1; i <= 10; i++) {
                 setTimeout(() => {
                     document.querySelector('canvas').dispatchEvent(wheelEvt1);
                 }, i * 30);
             }
             setTimeout(() => {
                 currentObj = undefined;
-                camera.position.y = obj.position.y+20
-            }, 500);
+                // camera.position.y = obj.position.y+20
+            }, 2000);
+            setTimeout(() => {
+                currentObj = obj;
+                const wheelEvt1 = document.createEvent('MouseEvents');
+                wheelEvt1.deltaY = 10
+                // Initializing the event
+                wheelEvt1.initMouseEvent(
+                    'wheel',    // type of event (e.g., 'click', 'mousemove', 'mousedown')
+                    true,       // bubbles (event will bubble up through the DOM)
+                    true,       // cancelable (event can be canceled)
+                )
 
-            // setTimeout(() => {
-            //     currentObj = obj;
-            //     const wheelEvt1 = document.createEvent('MouseEvents');
-            //     wheelEvt1.deltaY = 10
-            //     // Initializing the event
-            //     wheelEvt1.initMouseEvent(
-            //         'wheel',    // type of event (e.g., 'click', 'mousemove', 'mousedown')
-            //         true,       // bubbles (event will bubble up through the DOM)
-            //         true,       // cancelable (event can be canceled)
-            //     )
-
-            //     for (let i = 1; i <= 10; i++) {
-            //         setTimeout(() => {
-            //             document.querySelector('canvas').dispatchEvent(wheelEvt1);
-            //         }, i * 50);
-            //     }
+                for (let i = 1; i <= 5; i++) {
+                    setTimeout(() => {
+                        document.querySelector('canvas').dispatchEvent(wheelEvt1);
+                    }, i * 50);
+                }
+            }, 300);
+            // if(scale) {
             //     setTimeout(() => {
-            //         currentObj = undefined; 
-            //     }, 500);
-            // }, 300);
+            //         // currentObj = obj;
+            //         const wheelEvt1 = document.createEvent('MouseEvents');
+            //         wheelEvt1.deltaY = 10
+            //         // Initializing the event
+            //         wheelEvt1.initMouseEvent(
+            //             'wheel',    // type of event (e.g., 'click', 'mousemove', 'mousedown')
+            //             true,       // bubbles (event will bubble up through the DOM)
+            //             true,       // cancelable (event can be canceled)
+            //         )
+
+            //         for (let i = 1; i <= 12; i++) {
+            //             setTimeout(() => {
+            //                 document.querySelector('canvas').dispatchEvent(wheelEvt1);
+            //             }, i * 50);
+            //         }
+            //         // setTimeout(() => {
+            //         //     currentObj = undefined; 
+            //         // }, 500);
+            //     }, 300);
+            // }
             
         }
 
@@ -638,33 +671,28 @@
 
     
         function onMouseWheel(event) {
-            console.log(camera.position)
-            if(!currentObj) return;
+            if (!currentObj) return;
             event.preventDefault();
-            if(camera.position.y > 52 || camera.position.y < 10) {
-                camera.position.y = 52
-                // if (camera.position.x > currentObj.x) {
-                //     camera.position.x = currentObj.x
-                // }  
-                // if (camera.position.z < currentObj.z) {
-                //     camera.position.z = currentObj.z
-                // }
-
-                if(camera.position.x < -54) {
-                    camera.position.x = -54
-                }
-
-                if (camera.position.z > 92) {
-                    camera.position.z = 92
-                }
-
-
-            } else {
-                camera.position.y += event.deltaY / 1000;
-            } 
+           if (camera.position.y > 52 || camera.position.y < 10) {
+               camera.position.y = 52
+               // if (camera.position.x > currentObj.x) {
+               //     camera.position.x = currentObj.x
+               // }
+               // if (camera.position.z < currentObj.z) {
+               //     camera.position.z = currentObj.z
+               // }
+               if (camera.position.x < -54) {
+                   camera.position.x = -54
+               }
+               if (camera.position.z > 92) {
+                   camera.position.z = 92
+               }
+           } else {
+            //    camera.position.y += event.deltaY / 1000;
+           }
         }
 
-        window.addEventListener('wheel', onMouseWheel, false);
+        document.addEventListener('wheel', onMouseWheel, true);
 
     </script>
 </body>
