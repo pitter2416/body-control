@@ -1,0 +1,529 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <title>肛门穴位</title>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, user-scalable=no, minimum-scale=1.0, maximum-scale=1.0">
+    <style>
+        * {
+            padding: 0px;
+            margin: 0px;
+        }
+
+        html,
+        body {
+            overflow: hidden;
+        }
+
+        .menu-button {
+            position: fixed;
+            left: 32px;
+            top: 60px;
+            width: 32px;
+            height: 32px;
+            border-radius: 2px;
+            cursor: pointer;
+            background-color: #fff;
+            box-shadow: 5px 2px 5px #ccc;
+        }
+
+        .menu-container {
+            position: fixed;
+            left: 32px;
+            top: 100px;
+            z-index: 9999999;
+            width: 160px;
+            background-color: white;
+            max-height: 50vh;
+            overflow-y: scroll;
+        }
+
+        .menu-children-container {
+            position: fixed;
+            left: 180px;
+            top: 100px;
+            z-index: 9999999;
+            width: 120px;
+            background-color: white;
+            max-height: 50vh;
+            display: none;
+            overflow-y: scroll;
+        }
+
+        .menu-children-container.show {
+            display: block;
+        }
+
+        .menu-list {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .menu-list>.menu-item {
+            width: 100%;
+            height: 33px;
+            line-height: 33px;
+            text-align: center;
+            box-sizing: border-box;
+            background-color: #fff;
+            border: 1px solid #ddd;
+            cursor: pointer;
+            position: relative;
+        }
+
+        .menu-list>.menu-item.show-arrow {
+            padding-right: 12px;
+        }
+
+        .menu-list>.menu-item.show-arrow::after {
+            content: '▶';
+            position: absolute;
+            right: 12px;
+            color: #ddd;
+            font-size: 8px;
+        }
+
+        .menu-list>.menu-item.checked,
+        .menu-list>.menu-item:hover {
+            background-color: #ccc;
+        }
+
+        div.search-box {
+            display: flex;
+            position: fixed;
+            left: 32px;
+            top: 20px;
+            font-size: 20px;
+            color: blue;
+        }
+
+        div.search-box input {
+            outline: none;
+            border: 1px solid blue;
+            margin-left: 12px;
+            padding-left: 8px;
+            outline-style: none;
+        }
+
+        #theme {
+            display: flex;
+            flex-direction: column;
+            position: fixed;
+            z-index: 999;
+            right: 24px;
+            top: 32px
+        }
+
+        #theme li {
+            list-style: none;
+            display: inline-block;
+            height: 32px;
+            line-height: 32px;
+            margin-bottom: 8px;
+            cursor: pointer;
+            background-color: #fff;
+            padding: 0px 4px;
+        }
+
+        #theme li.checked {
+            background-color: #f7f7f7;
+            opacity: 0.5;
+            color: #333;
+        }
+    </style>
+</head>
+
+<body>
+    <div id="container"></div>
+    <div class="menu-button">
+        <img src="./imgs/menu.png">
+    </div>
+    <div class="menu-container">
+        <div class="menu-list"></div>
+    </div>
+    <div class="menu-children-container">
+        <div class="menu-list"></div>
+    </div>
+    <div class="search-box">
+        <label for="input-acupoints">选择: </label>
+        <input list="acupoints-data-list" id="input-acupoints" name="input-acupoints" placeholder="请输入名称">
+    </div>
+    <datalist id="acupoints-data-list"></datalist>
+
+    <script async src="https://unpkg.com/es-module-shims@1.6.3/dist/es-module-shims.js"></script>
+    <script type="importmap">
+        {
+            "imports": {
+                "three": "./js/three.module.js",
+                "three/addons/": "./js/jsm/"
+            }
+        }
+    </script>
+    <script type="module">
+        import { gangmen } from './models/gangmen.js'
+        import { TWEEN } from 'https://unpkg.com/three@0.139.0/examples/jsm/libs/tween.module.min.js';
+        import * as THREE from 'three';
+        import { GUI } from 'three/addons/libs/lil-gui.module.min.js';
+        import { OBJLoader } from 'three/addons/loaders/OBJLoader.js';
+        import { MTLLoader } from 'three/addons/loaders/MTLLoader.js';
+        import { RoomEnvironment } from 'three/addons/environments/RoomEnvironment.js';
+        import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+        import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
+        import { FontLoader } from 'three/addons/loaders/FontLoader.js';
+        import { TextGeometry } from 'three/addons/geometries/TextGeometry.js';
+        import { DecalGeometry } from 'three/addons/geometries/DecalGeometry.js';
+
+        import {
+            CSS2DRenderer,
+            CSS2DObject,
+        } from "three/addons/renderers/CSS2DRenderer.js";
+
+        let font;
+        new FontLoader().load('fonts/Microsoft_JhengHei_Regular.json', function (f) {
+            font = f;
+        });
+        // Set up the scene
+        const scene = new THREE.Scene();
+        scene.background = new THREE.Color(0xffffff); 
+
+        // Create a plane geometry
+        const geometry = new THREE.PlaneGeometry(1.898*3 , 1.603*3); // Size can be adjusted
+
+        // Create a material with the image texture
+        const textureLoader = new THREE.TextureLoader();
+        const texture = textureLoader.load('models/gangmen.jpg');
+        const material = new THREE.MeshBasicMaterial({ map: texture });
+
+        // Create a mesh with the geometry and material
+        const mesh = new THREE.Mesh(geometry, material);
+
+        // Add the plane to the scene
+        scene.add(mesh);
+        scene.rotation.set(0, 0, 0); 
+
+        // Create a camera
+        const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+
+        // Set the camera position
+        camera.position.z = 5;
+
+        // Create a renderer
+        const renderer = new THREE.WebGLRenderer();
+
+        // Set the renderer size to match the window
+        renderer.setSize(window.innerWidth, window.innerHeight);
+
+        // Add the renderer's canvas element to the document
+        document.body.appendChild(renderer.domElement);
+
+        // Render the scene
+        function render() {
+        requestAnimationFrame(render);
+            renderer.render(scene, camera);
+        }
+
+        render();
+
+        // Resize listener
+        function handleResize() {
+            camera.aspect = window.innerWidth / window.innerHeight;
+            camera.updateProjectionMatrix();
+            renderer.setSize(window.innerWidth, window.innerHeight);
+        }
+
+        // Add resize listener
+        window.addEventListener('resize', handleResize);
+
+
+        const list = [];
+        let index = 1;
+        let moved = false;
+        const decals = [];
+        const size = new THREE.Vector3( 10, 10, 10 );
+        const position = new THREE.Vector3();
+        const orientation = new THREE.Euler();
+        const intersects = [];
+        const preLoadMeshList = [];
+        const intersection = {
+            intersects: false,
+            point: new THREE.Vector3(),
+            normal: new THREE.Vector3()
+        };
+        const params = {
+            minScale: 10,
+            maxScale: 20,
+            clear: function () {
+                removeDecals();
+            }
+        };
+        
+        let mouseHelper = new THREE.Mesh( new THREE.BoxGeometry( 1, 1, 10 ), new THREE.MeshNormalMaterial() );
+        let raycaster = new THREE.Raycaster();
+        const mouse = new THREE.Vector2();
+        const points1 = [];
+        points1.push(new THREE.Vector3(-1, 0, 0));
+        points1.push(new THREE.Vector3(0, 1, 0));
+        points1.push(new THREE.Vector3(1, 0, 0));
+        const geometry1 = new THREE.BufferGeometry().setFromPoints(points1);
+        geometry1.setFromPoints( [ new THREE.Vector3(), new THREE.Vector3() ] );
+        let line = new THREE.Line( geometry1, new THREE.LineBasicMaterial({color: 0xff0000,linewidth: 2 }) );
+        scene.add( line );
+        const controls = new OrbitControls( camera, renderer.domElement );
+        controls.addEventListener( 'change', function () {
+            moved = true;
+        } );
+
+        window.addEventListener( 'pointerdown', function () {
+
+            moved = false;
+
+        } );
+
+        window.addEventListener( 'pointerup', function ( event ) {
+
+            if ( moved === false ) {
+
+                checkIntersection( event.clientX, event.clientY );
+
+                if ( intersection.intersects ) shoot();
+
+            }
+
+        } );
+
+        window.addEventListener( 'pointermove', onPointerMove );
+
+        function onPointerMove( event ) {
+            if ( event.isPrimary ) {
+                checkIntersection( event.clientX, event.clientY );
+            }
+        }
+
+        document.addEventListener('click', function (event) {
+            checkIntersection(event.clientX, event.clientY, true);
+        });
+
+        function checkIntersection( x, y, flag ) {
+
+            if ( mesh === undefined ) return;
+
+            mouse.x = ( x / window.innerWidth ) * 2 - 1;
+            mouse.y = - ( y / window.innerHeight ) * 2 + 1;
+
+            raycaster.setFromCamera( mouse, camera );
+            raycaster.intersectObject( mesh, false, intersects );
+            var objectIntersects = raycaster.intersectObjects( mesh.children );
+
+            if ( intersects.length > 0 ) {
+
+                const p = intersects[ 0 ].point;
+                mouseHelper.position.copy( p );
+                intersection.point.copy( p );
+                const n = intersects[ 0 ].face.normal.clone();
+                n.transformDirection( mesh.matrixWorld );
+                n.multiplyScalar( 10 );
+                n.add( intersects[ 0 ].point );
+
+                intersection.normal.copy( intersects[ 0 ].face.normal );
+                mouseHelper.lookAt( n );
+
+                const positions = line.geometry.attributes.position;
+                positions.setXYZ( 0, p.x, p.y, p.z );
+                positions.setXYZ( 1, n.x, n.y, n.z );
+                positions.needsUpdate = true;
+                intersection.intersects = true;
+                intersects.length = 0;
+                if (flag) {
+                    if(objectIntersects.length > 0) {
+                        showMesh(objectIntersects[0].object)
+                    }
+                }
+            } else {
+                intersection.intersects = false;
+            }
+        }
+
+        function shoot() {
+            position.copy( intersection.point );
+            // 创建一个圆球的几何体
+            // const radius = 0.12; // 圆球的半径
+            // const widthSegments = 12; // 球体宽度上的分段数
+            // const heightSegments = 12; // 球体高度上的分段数
+            // const geometry = new THREE.SphereGeometry(radius, widthSegments, heightSegments);
+            // // 创建一个材质
+            // const material = new THREE.MeshBasicMaterial({ color: 0xff0000 });
+            // // 创建一个圆球的网格模型
+            // const sphere = new THREE.Mesh(geometry, material);
+            // sphere.position.set(position.x, position.y, position.z);
+            // // 将圆球添加到场景中
+            // decals.push(sphere);
+            // mesh.attach(sphere)
+            // list.push({ id: index++, position: { x: position.x, y: position.y, z: position.z }, x: sphere.matrix.elements[12], y: sphere.matrix.elements[13], z: sphere.matrix.elements[14] })
+            // if (list.length == 12) {
+            //     console.log(list)
+            // }
+        }
+
+        function removeDecals() {
+            decals.forEach( function ( d ) {
+                mesh.remove( d );
+            } );
+            decals.length = 0;
+        }
+
+        function showMesh(obj) {
+            const cube = mesh.children.find(e=>e==obj);
+            if(cube == null) return;
+            for (var d of gangmen) {
+                const v = d.acupoints.find(v => v.id == obj.name)
+                if (v) {
+                    // onAcupointsClick(v)
+                    mesh.children.forEach(e => e.material.opacity = 0);
+                    removeDecals()
+                    cube.material.opacity = 1;
+                    addFont(obj, v)
+                    return;
+                }
+            }
+        }
+
+        // 把所有穴位点全部添加到人体上，并设置成不透明
+        function preRender() {
+            for (var i = 0; i < preLoadMeshList.length; i++) {
+                var model = preLoadMeshList[i];
+                // 创建一个圆球的几何体
+                var geometry = new THREE.SphereGeometry(0.1, 20, 20);
+                // 创建一个材质
+                var material = new THREE.MeshBasicMaterial({ color: 0x0000ff, transparent: true, opacity: 0 });
+                var mesh1 = new THREE.Mesh(geometry, material)
+                // Set the transformation matrix
+                var matrix = new THREE.Matrix4();
+                matrix.makeTranslation(model.x, model.y, model.z);
+                mesh1.matrix = matrix;
+                mesh1.position.setFromMatrixPosition(matrix);
+                mesh1.rotation.setFromRotationMatrix(matrix);
+                mesh1.name = `${model.id}`;
+                mesh.attach(mesh1);
+            }
+        }
+
+        function setSearchBoxDataList() {
+            const ele = document.querySelector('#acupoints-data-list')
+            const list = gangmen.map((d) => d.acupoints.map(e => `<option value='${e.name}' data-id='${e.id}'/>`).join('')).join('')
+            ele.innerHTML = list
+
+
+            for (var d of gangmen) {
+                for (var d1 of d.acupoints) {
+                    preLoadMeshList.push(d1)
+                }
+            }
+        }
+
+        function addFont(m, model) {
+            if(font == null) return;
+            addText(m, model);
+        }
+
+        function addText(m, model) {
+            var text = model.name;
+            var geometry = new TextGeometry(text, {
+                font: font,          // 字体格式
+                size: 0.15,           // 字体大小
+                height: 0.02,
+                curveSegments: 11,  // 曲线控制点数
+                bevelEnabled: false, // 斜角
+                bevelThickness: 0.1,  // 斜角的深度
+                bevelSize: 1,       // 斜角的大小
+                bevelSegments: 1    // 斜角段数
+            });
+            const material = new THREE.MeshBasicMaterial({ color: 0x0000ff });
+            var mesh1 = new THREE.Mesh(geometry, material);
+            mesh1.needsUpdate = true;
+            mesh1.position.copy(model.position);
+            mesh1.position.z = 0.5
+            mesh1.position.x += 0.05
+            mesh.attach(mesh1);
+            decals.push(mesh1);
+        }
+
+        function onAcupointsClick(obj) {
+            var scale = false;
+            mesh.children.forEach(e => e.material.opacity = 0);
+            removeDecals()
+            var cube = mesh.children.find(e => e.name == `${obj.id}`)
+            cube.material.opacity = 1;
+            addFont(cube, obj);
+        }
+
+        function onAcupointsValueChanged(e) {
+            const ele = document.querySelector('#acupoints-data-list')
+            const option = ele && ele.querySelector(`option[value=${e.target.value}]`)
+            const id = option && option.dataset.id
+            if (id) {
+                for (var d of gangmen) {
+                    const v = d.acupoints.find(v => v.id == id)
+                    if (v) {
+                        onAcupointsClick(v)
+                        return;
+                    }
+                }
+            }
+        }
+
+        setSearchBoxDataList();
+        preRender();
+        document.querySelector('#input-acupoints').addEventListener('change', onAcupointsValueChanged);
+
+        document.querySelector('.menu-button').addEventListener('click', function (e) {
+            if (document.querySelector('.menu-container > .menu-list').innerHTML) {
+                hideMenuContainer();
+            } else {
+                showMenuContainer();
+            }
+        })
+
+        function showMenuContainer() {
+            const menuList = gangmen.map((e, i) => `<div class="menu-item show-arrow" data-index="${i}">${e.name}</div>`);
+            document.querySelector('.menu-container > .menu-list').innerHTML = menuList.join('')
+            document.querySelector('.menu-container > .menu-list').addEventListener('mouseover', function (e) {
+                const index = e.target.dataset.index;
+                if (index >= 0) {
+                    const list = gangmen[index].acupoints;
+                    const childBox = document.querySelector('.menu-children-container');
+                    if (childBox) {
+                        childBox.classList.add('show');
+                        var childrenBox = list.map((e, i) => `<div class="menu-item" data-id="${e.id}">${e.name}</div>`).join('');
+                        childBox.querySelector('.menu-list').innerHTML = childrenBox
+                        document.querySelectorAll('.menu-list > .menu-item').forEach(e => e.classList.remove('checked'))
+                        e.target.classList.add('checked')
+                    }
+                }
+            })
+
+            document.querySelector('.menu-children-container .menu-list').addEventListener('click', function (e) {
+                e.preventDefault();
+                e.stopPropagation();
+                if (e.target.dataset.id) {
+                    hideMenuContainer();
+                    for (var d of gangmen) {
+                        const v = d.acupoints.find(v => v.id == e.target.dataset.id)
+                        if (v) {
+                            onAcupointsClick(v)
+                            return;
+                        }
+                    }
+                }
+            }, true)
+        }
+
+        function hideMenuContainer() {
+            document.querySelector('.menu-children-container').classList.remove('show');
+            document.querySelector('.menu-container > .menu-list').innerHTML = ''
+            document.querySelector('.menu-children-container > .menu-list').innerHTML = ''
+        }
+    </script>
+</body>
+
+</html>
